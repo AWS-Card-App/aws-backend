@@ -1,0 +1,158 @@
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub
+        - ${ResourceName} From Stack ${AWS::StackName}
+        - ResourceName: Api
+      StageName: Prod
+      DefinitionBody:
+        openapi: '3.0'
+        info: {}
+        paths:
+          /cards:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetCards.Arn}/invocations
+              responses: {}
+          /card:
+            put:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PutCard.Arn}/invocations
+              responses: {}
+            delete:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteCard.Arn}/invocations
+              responses: {}
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+      Cors:
+        MaxAge: 5
+  GetCards:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: GetCards
+      CodeUri: api/get-cards/
+      Runtime: provided.al2023
+      MemorySize: 512
+      Timeout: 30
+      Tracing: Active
+      Architectures:
+        - arm64
+      Handler: bootstrap
+      Events:
+        ApiGETcards:
+          Type: Api
+          Properties:
+            Path: /cards
+            Method: GET
+            RestApiId: !Ref Api
+      Environment:
+        Variables:
+          CARDSTORAGE_TABLE_NAME: !Ref CardStorage
+          CARDSTORAGE_TABLE_ARN: !GetAtt CardStorage.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardStorage
+  GetCardsLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GetCards}
+  PutCard:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: PutCard
+      CodeUri: api/put-card/
+      Runtime: provided.al2023
+      MemorySize: 512
+      Timeout: 30
+      Tracing: Active
+      Architectures:
+        - arm64
+      Handler: bootstrap
+      Events:
+        ApiPUTcard:
+          Type: Api
+          Properties:
+            Path: /card
+            Method: PUT
+            RestApiId: !Ref Api
+      Environment:
+        Variables:
+          CARDSTORAGE_TABLE_NAME: !Ref CardStorage
+          CARDSTORAGE_TABLE_ARN: !GetAtt CardStorage.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardStorage
+  PutCardLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PutCard}
+  DeleteCard:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: DeleteCard
+      CodeUri: api/delete-card/
+      Runtime: provided.al2023
+      MemorySize: 512
+      Timeout: 30
+      Tracing: Active
+      Architectures:
+        - arm64
+      Handler: bootstrap
+      Events:
+        ApiDELETEcard:
+          Type: Api
+          Properties:
+            Path: /card
+            Method: DELETE
+            RestApiId: !Ref Api
+      Environment:
+        Variables:
+          CARDSTORAGE_TABLE_NAME: !Ref CardStorage
+          CARDSTORAGE_TABLE_ARN: !GetAtt CardStorage.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardStorage
+  DeleteCardLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${DeleteCard}
+  CardStorage:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: 'N'
+        - AttributeName: name
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: name
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
