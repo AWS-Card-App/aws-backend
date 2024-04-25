@@ -45,8 +45,8 @@ Resources:
         - ResourceName: GetCards
       CodeUri: api/get-cards/
       Runtime: provided.al2023
-      MemorySize: 512
-      Timeout: 30
+      MemorySize: 128
+      Timeout: 15
       Tracing: Active
       Architectures:
         - arm64
@@ -80,8 +80,8 @@ Resources:
         - ResourceName: PutCard
       CodeUri: api/put-card/
       Runtime: provided.al2023
-      MemorySize: 512
-      Timeout: 30
+      MemorySize: 128
+      Timeout: 15
       Tracing: Active
       Architectures:
         - arm64
@@ -115,8 +115,8 @@ Resources:
         - ResourceName: DeleteCard
       CodeUri: api/delete-card/
       Runtime: provided.al2023
-      MemorySize: 512
-      Timeout: 30
+      MemorySize: 128
+      Timeout: 15
       Tracing: Active
       Architectures:
         - arm64
@@ -144,15 +144,15 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: 'N'
         - AttributeName: name
           AttributeType: S
+        - AttributeName: id
+          AttributeType: 'N'
       BillingMode: PAY_PER_REQUEST
       KeySchema:
-        - AttributeName: id
-          KeyType: HASH
         - AttributeName: name
+          KeyType: HASH
+        - AttributeName: id
           KeyType: RANGE
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES

@@ -17,8 +17,8 @@ func PutCard(context context.Context, request events.APIGatewayProxyRequest) (ev
 
     id := time.Now().UnixMilli()
     card := commons.Card {
+        Name: request.QueryStringParameters["name"],
         Id: id,
-        Name: request.PathParameters["name"],
         Note: request.Body,
     }
 
