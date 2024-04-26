@@ -13,7 +13,7 @@ import (
 	"io.github.taz03/api/commons"
 )
 
-func GetCard(context context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func GetCards(context context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
     table := commons.GetTableInstance(context)
 
     key := expression.Key("name").Equal(expression.Value(request.QueryStringParameters["name"]))
@@ -47,5 +47,5 @@ func GetCard(context context.Context, request events.APIGatewayProxyRequest) (ev
 }
 
 func main() {
-    lambda.Start(GetCard)
+    lambda.Start(GetCards)
 }
