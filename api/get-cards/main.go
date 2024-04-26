@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	dbExpression "github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"io.github.taz03/api/commons"
 )
@@ -16,14 +16,14 @@ import (
 func GetCard(context context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
     table := commons.GetTableInstance(context)
 
-    key := dbExpression.Key("name").Equal(dbExpression.Value(request.QueryStringParameters["name"]))
-    expression, _ := dbExpression.NewBuilder().WithKeyCondition(key).Build()
+    key := expression.Key("name").Equal(expression.Value(request.QueryStringParameters["name"]))
+    keyExpression, _ := expression.NewBuilder().WithKeyCondition(key).Build()
 
     queryPaginator := dynamodb.NewQueryPaginator(table.DynamoDbClient, &dynamodb.QueryInput {
         TableName:                 table.TableName,
-        ExpressionAttributeNames:  expression.Names(),
-        ExpressionAttributeValues: expression.Values(),
-        KeyConditionExpression:    expression.KeyCondition(),
+        ExpressionAttributeNames:  keyExpression.Names(),
+        ExpressionAttributeValues: keyExpression.Values(),
+        KeyConditionExpression:    keyExpression.KeyCondition(),
     })
 
     var cards []commons.Card
@@ -40,11 +40,9 @@ func GetCard(context context.Context, request events.APIGatewayProxyRequest) (ev
         ss = append(ss, v.String())
     }
 
-    s := fmt.Sprintf("[%v]", strings.Join(ss, ","))
-
     return events.APIGatewayProxyResponse {
         StatusCode: 200,
-        Body: s,
+        Body: fmt.Sprintf("{\"cards\":[%v]}", strings.Join(ss, ",")),
     }, nil
 }
 
