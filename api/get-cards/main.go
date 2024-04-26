@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	"encoding/json"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -35,14 +34,15 @@ func GetCards(context context.Context, request events.APIGatewayProxyRequest) (e
         cards = append(cards, cardPage...)
     }
 
-    var ss []string
-    for _, v := range cards {
-        ss = append(ss, v.String())
+    var body struct {
+        Cards []commons.Card `json:"cards"`
     }
+    body.Cards = append(body.Cards, cards...)
+    response, _ := json.Marshal(body)
 
     return events.APIGatewayProxyResponse {
+        Body:       string(response),
         StatusCode: 200,
-        Body: fmt.Sprintf("{\"cards\":[%v]}", strings.Join(ss, ",")),
     }, nil
 }
 

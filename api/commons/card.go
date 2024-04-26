@@ -22,7 +22,3 @@ func (card *Card) GetKey() map[string]types.AttributeValue {
         "id": id,
     }
 }
-
-func (card *Card) String() string {
-    return fmt.Sprintf("{Name:'%v',Id:%v,Note:'%v'}", card.Name, card.Id, card.Note)
-}
