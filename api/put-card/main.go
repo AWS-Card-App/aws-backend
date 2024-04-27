@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -18,7 +18,7 @@ func PutCard(context context.Context, request events.APIGatewayProxyRequest) (ev
     id := time.Now().UnixMilli()
     card := commons.Card {
         Name: request.QueryStringParameters["name"],
-        Id: id,
+        Id:   id,
         Note: request.Body,
     }
 
@@ -28,9 +28,15 @@ func PutCard(context context.Context, request events.APIGatewayProxyRequest) (ev
         Item: item,
     })
 
+    var body struct {
+        Id int64 `json:"id"`
+    }
+    body.Id = id
+    response, _ := json.Marshal(body)
+
     return events.APIGatewayProxyResponse {
+        Body:       string(response),
         StatusCode: 200,
-        Body: fmt.Sprintf("Added card at id %v", id),
     }, nil
 }
 

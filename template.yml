@@ -31,6 +31,12 @@ Resources:
                 type: aws_proxy
                 uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteCard.Arn}/invocations
               responses: {}
+            patch:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateCard.Arn}/invocations
+              responses: {}
       EndpointConfiguration: REGIONAL
       TracingEnabled: true
       Cors:
@@ -156,3 +162,38 @@ Resources:
           KeyType: RANGE
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
+  UpdateCard:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: UpdateCard
+      CodeUri: api/update-card
+      Runtime: provided.al2023
+      MemorySize: 128
+      Timeout: 15
+      Tracing: Active
+      Events:
+        ApiPATCHcard:
+          Type: Api
+          Properties:
+            Path: /card
+            Method: PATCH
+            RestApiId: !Ref Api
+      Environment:
+        Variables:
+          CARDSTORAGE_TABLE_NAME: !Ref CardStorage
+          CARDSTORAGE_TABLE_ARN: !GetAtt CardStorage.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardStorage
+      Architectures:
+        - arm64
+      Handler: bootstrap
+  UpdateCardLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${UpdateCard}
